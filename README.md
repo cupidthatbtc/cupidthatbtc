@@ -7,7 +7,7 @@ over time, each review is a bounded score sitting on a noisy count, and you want
 to call the next one. Album scores, pilot ratings, vote shares. panelcast is me
 trying to write that model once instead of rebuilding it for every new dataset.
 
-🎧 <!-- NOWPLAYING:START -->last played — **[Sloppy Joe](https://stats.fm/track/334115504)** by slayr <sub>· 8h ago</sub><!-- NOWPLAYING:END -->
+🎧 <!-- NOWPLAYING:START -->now playing — **[Try as I May](https://stats.fm/track/299240242)** by Cameron Winter<!-- NOWPLAYING:END -->
 
 ### what's here
 
