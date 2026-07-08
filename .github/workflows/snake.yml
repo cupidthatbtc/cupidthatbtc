@@ -31,7 +31,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STATS_LOGIN: cupidthatbtc
-        run: python3 scripts/gen_stats.py dist/github-stats-dark.svg
+        run: |
+          sudo chown -R "$USER" dist   # snk runs in a container and writes dist/ as root
+          python3 scripts/gen_stats.py dist/github-stats-dark.svg
 
       - name: push to output branch
         uses: crazy-max/ghaction-github-pages@v4
