@@ -35,6 +35,15 @@ jobs:
           sudo chown -R "$USER" dist   # snk runs in a container and writes dist/ as root
           python3 scripts/gen_stats.py dist/github-stats-dark.svg
 
+      - name: verify assets exist
+        # Never publish a partial dist: the pages publisher replaces the whole
+        # output branch, so pushing with a file missing would DELETE that image
+        # (a broken README image). If either is missing, fail -> skip the push
+        # -> last-good SVGs stay live on the output branch.
+        run: |
+          test -s dist/github-snake-dark.svg
+          test -s dist/github-stats-dark.svg
+
       - name: push to output branch
         uses: crazy-max/ghaction-github-pages@v4
         with:
@@ -42,3 +51,31 @@ jobs:
           build_dir: dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: keepalive
+        if: always()
+        # GitHub auto-disables scheduled workflows after 60 days with no commit
+        # to the DEFAULT branch. Our daily push goes to `output` (non-default),
+        # which does NOT reset that timer -> the cron would silently die. Touch
+        # main only when it's been >50 days, so this stays quiet (~7 commits/yr).
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          age=$(( ( $(date +%s) - $(git log -1 --format=%ct) ) / 86400 ))
+          echo "default branch last touched ${age}d ago"
+          if [ "$age" -ge 50 ]; then
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/last-keepalive
+            git add .github/last-keepalive
+            git commit -m "chore: keepalive (keep scheduled workflow enabled)"
+            git push origin HEAD:main
+          fi
+
+      - name: alert on failure
+        if: failure()
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          [ -z "$NTFY_TOPIC" ] && exit 0
+          curl -s -H "Title: profile assets failed" -H "Priority: high" -H "Tags: warning" \
+            -d "cupidthatbtc profile-assets run failed — snake/stats may go stale. ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "https://ntfy.sh/$NTFY_TOPIC" || true
