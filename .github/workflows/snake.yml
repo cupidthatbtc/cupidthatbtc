@@ -23,11 +23,11 @@ jobs:
         uses: Platane/snk@v3
         with:
           github_user_name: cupidthatbtc
-          # tokyonight palette so the snake sits with the scorecard + now-playing
-          # cards: dim→bright periwinkle contribution cells, purple snake.
+          # green palette matching the now-playing card: dim→bright green
+          # contribution cells, bright-lime snake.
           outputs: |
-            dist/github-snake-dark.svg?color_snake=%23bb9af7&color_dots=%231c2033,%232e4372,%233f5da0,%235f7fce,%238fb0ff
-            dist/github-snake.svg?color_snake=%237aa2f7&color_dots=%23ebeef7,%23c3d0f0,%2393a7e0,%236a8fd6,%233d5aa8
+            dist/github-snake-dark.svg?color_snake=%23c3f38f&color_dots=%231a2b1f,%2326492b,%23357a3a,%235aa84f,%239ece6a
+            dist/github-snake.svg?color_snake=%235aa84f&color_dots=%23eef7ea,%23c9e8bf,%2393c98a,%235aa84f,%23357a3a
 
       - name: generate stats svg
         env:
@@ -37,12 +37,6 @@ jobs:
           sudo chown -R "$USER" dist   # snk runs in a container and writes dist/ as root
           python3 scripts/gen_stats.py dist/github-stats-dark.svg
 
-      - name: generate listening svg
-        env:
-          STATSFM_USER: cupidthatbtc
-          STATSFM_RANGE: weeks
-        run: python3 scripts/gen_music.py dist/listening-dark.svg
-
       - name: verify assets exist
         # Never publish a partial dist: the pages publisher replaces the whole
         # output branch, so pushing with a file missing would DELETE that image
@@ -51,7 +45,6 @@ jobs:
         run: |
           test -s dist/github-snake-dark.svg
           test -s dist/github-stats-dark.svg
-          test -s dist/listening-dark.svg
 
       - name: push to output branch
         uses: crazy-max/ghaction-github-pages@v4

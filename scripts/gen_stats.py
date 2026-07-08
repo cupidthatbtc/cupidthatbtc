@@ -168,7 +168,7 @@ def build():
     A(f'<text x="{P}" y="78" class="k">ACTIVITY RANK</text>')
     A(f'<text x="{P}" y="150" fill="{INK}" font-size="76" font-weight="800" '
       f'letter-spacing="-2">{letter}</text>')
-    A(f'<rect x="{P+2}" y="160" width="52" height="3" rx="1.5" fill="{BLUE}"/>')
+    A(f'<rect x="{P+2}" y="160" width="52" height="3" rx="1.5" fill="{GREEN}"/>')
     gw = 46 if len(letter) == 1 else 82
     px0 = P + gw + 24
     A(f'<text x="{px0}" y="108" fill="{DIM}" font-size="12">top</text>')

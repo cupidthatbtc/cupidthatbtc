@@ -32,7 +32,3 @@ runs and keeping test data out of training.
 <img width="820" src="https://raw.githubusercontent.com/cupidthatbtc/cupidthatbtc/output/github-stats-dark.svg" alt="cupidthatbtc GitHub scorecard — github-readme-stats rank B+ (top 49%), 1,510 commits, 149 pull requests, 79 issues, 30-day best streak; top languages Python and JavaScript" />
 
 <img width="820" src="https://raw.githubusercontent.com/cupidthatbtc/cupidthatbtc/output/github-snake-dark.svg" alt="contribution graph eaten by a snake" />
-
-### lately
-
-<img width="820" src="https://raw.githubusercontent.com/cupidthatbtc/cupidthatbtc/output/listening-dark.svg" alt="stats.fm listening card — top artists over the last 4 weeks: slayr, Brandy, Kanye West, Kim Petras, Madonna" />
