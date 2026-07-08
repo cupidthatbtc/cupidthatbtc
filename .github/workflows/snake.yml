@@ -23,9 +23,11 @@ jobs:
         uses: Platane/snk@v3
         with:
           github_user_name: cupidthatbtc
+          # tokyonight palette so the snake sits with the scorecard + now-playing
+          # cards: dim→bright periwinkle contribution cells, purple snake.
           outputs: |
-            dist/github-snake-dark.svg?palette=github-dark
-            dist/github-snake.svg
+            dist/github-snake-dark.svg?color_snake=%23bb9af7&color_dots=%231c2033,%232e4372,%233f5da0,%235f7fce,%238fb0ff
+            dist/github-snake.svg?color_snake=%237aa2f7&color_dots=%23ebeef7,%23c3d0f0,%2393a7e0,%236a8fd6,%233d5aa8
 
       - name: generate stats svg
         env:

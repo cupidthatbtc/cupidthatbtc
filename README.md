@@ -27,8 +27,8 @@ Python, NumPyro, JAX, and pandas for the modelling; JavaScript and Cloudflare
 Workers for the web side. I spend more time than is reasonable on reproducible
 runs and keeping test data out of training.
 
----
+### the year, scored
 
-<img width="480" src="https://raw.githubusercontent.com/cupidthatbtc/cupidthatbtc/output/github-stats-dark.svg" alt="cupidthatbtc's GitHub stats" />
+<img width="820" src="https://raw.githubusercontent.com/cupidthatbtc/cupidthatbtc/output/github-stats-dark.svg" alt="cupidthatbtc GitHub scorecard — rank A, 1,510 commits, 149 pull requests, 79 issues, 30-day best streak; top languages Python and JavaScript" />
 
-<img src="https://raw.githubusercontent.com/cupidthatbtc/cupidthatbtc/output/github-snake-dark.svg" alt="contribution snake" />
+<img width="820" src="https://raw.githubusercontent.com/cupidthatbtc/cupidthatbtc/output/github-snake-dark.svg" alt="contribution graph eaten by a snake" />
