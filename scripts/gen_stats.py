@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Generate a self-hosted GitHub "scorecard" as a static SVG.
 
-Runs in CI with the built-in GITHUB_TOKEN and writes an SVG committed to the
+Runs in CI with the built-in GITHUB_TOKEN, writes an SVG committed to the
 `output` branch, so the profile README never depends on a live third-party
 stats server at render time. Public data only.
 
-Design: an editorial scorecard, not a stat-tile card. A grade dial (throughput-
-weighted rank), a ledger of the year's contribution activity, and a language
-breakdown — tokyonight palette, monospace numerals, hairline structure, to sit
+Concept: cupidthatbtc models bounded *score distributions* (album ratings). So
+his GitHub year is scored the same way — the rank isn't a mystery letter in a
+gauge, it's a visible position on the (genuinely heavy-tailed) distribution of
+contributor activity. tokyonight palette, flat color, monospace numerals, to sit
 with bjorkslefteyelash.com/api/nowplaying.svg.
 """
 import json
@@ -22,13 +23,16 @@ TOKEN = os.environ.get("GITHUB_TOKEN", "")
 OUT = sys.argv[1] if len(sys.argv) > 1 else "dist/github-stats-dark.svg"
 
 # ---- palette (tokyonight; matches the now-playing card) -------------------
-BG, PANEL = "#1a1b27", "#1e2030"
-HAIR = "#292e42"          # hairlines / tracks
-INK = "#c0caf5"           # bright numerals
+BG = "#1a1b27"
+HAIR = "#282c40"          # hairlines / tracks
+FAINT = "#20233440"       # faint row rules
+INK = "#c8d3f5"           # bright / numerals
 TXT = "#a9b1d6"           # labels
-DIM = "#565f89"           # small-caps kickers, muted
-BLUE = "#7aa2f7"
-PURPLE = "#bb9af7"
+DIM = "#565f89"           # kickers, muted
+BLUE = "#7aa2f7"          # single accent
+CURVE = "#2d3459"         # muted density body
+RIDGE = "#5b6aa8"         # density outline
+TAIL = "#7aa2f7"          # highlighted tail (the top slice)
 GREEN = "#9ece6a"
 SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 MONO = "ui-monospace,'SF Mono','JetBrains Mono','Cascadia Code',Menlo,Consolas,monospace"
@@ -40,22 +44,14 @@ query($login:String!){
     followers{totalCount}
     repositories(first:100, ownerAffiliations:OWNER, isFork:false, privacy:PUBLIC){
       totalCount
-      nodes{
-        stargazerCount
-        languages(first:12, orderBy:{field:SIZE, direction:DESC}){
-          edges{ size node{ name color } }
-        }
-      }
+      nodes{ stargazerCount languages(first:12, orderBy:{field:SIZE, direction:DESC}){
+        edges{ size node{ name color } } } }
     }
     contributionsCollection{
       totalCommitContributions
       totalPullRequestContributions
       totalIssueContributions
-      totalPullRequestReviewContributions
-      contributionCalendar{
-        totalContributions
-        weeks{ contributionDays{ contributionCount date } }
-      }
+      contributionCalendar{ totalContributions weeks{ contributionDays{ contributionCount } } }
     }
   }
 }
@@ -93,7 +89,7 @@ def streaks(days):
         else:
             run = 0
     cur, i = 0, len(days) - 1
-    if days and days[i]["contributionCount"] == 0:   # today may have no commit yet
+    if days and days[i]["contributionCount"] == 0:
         i -= 1
     while i >= 0 and days[i]["contributionCount"] > 0:
         cur += 1
@@ -102,24 +98,42 @@ def streaks(days):
 
 
 def grade(commits, prs, issues, longest):
-    """Throughput-weighted contribution rank. Measures activity, not popularity:
-    stars/followers are deliberately excluded so a pseudonymous account isn't
-    graded on vanity metrics it never chases. Reference medians are calibrated to
-    an active solo contributor."""
-    def cdf(x):    # exponential CDF — saturates as activity climbs
+    """Throughput-weighted percentile → letter. Measures activity, not
+    popularity: stars/followers are excluded so a pseudonymous account isn't
+    graded on vanity metrics. Reference medians for an active solo contributor."""
+    def cdf(x):
         return 1 - 2 ** (-x)
-    terms = [
-        (commits, 800, 3.0, cdf),
-        (prs,      50, 3.0, cdf),
-        (issues,   25, 1.5, cdf),
-        (longest,  21, 1.5, cdf),
-    ]
-    score = sum(w * f(v / m) for v, m, w, f in terms) / sum(w for *_, w, _ in terms)
-    pct = 100 * (1 - score)                       # lower is better
+    terms = [(commits, 800, 3.0), (prs, 50, 3.0), (issues, 25, 1.5), (longest, 21, 1.5)]
+    score = sum(w * cdf(v / m) for v, m, w in terms) / sum(w for *_, w in terms)
+    pct = 100 * (1 - score)
     thresholds = [(1, "S"), (12.5, "A+"), (25, "A"), (37.5, "A-"), (50, "B+"),
                   (62.5, "B"), (75, "B-"), (87.5, "C+"), (100, "C")]
-    letter = next(l for t, l in thresholds if pct <= t)
-    return letter, pct, score
+    return next(l for t, l in thresholds if pct <= t), pct
+
+
+def density_paths(x0, x1, base, h, pct):
+    """A heavy-tailed reference curve (gamma f(x)=x^2 e^-x) with the tail beyond
+    the user's quantile highlighted. Returns (body_path, tail_path, mx, my)."""
+    N, XMAX = 170, 11.0
+    xs = [XMAX * i / (N - 1) for i in range(N)]
+    fs = [(x * x) * math.exp(-x) for x in xs]
+    fmax = max(fs)
+    tot = sum(fs)
+    cum, c = [], 0.0
+    for f in fs:
+        c += f
+        cum.append(c / tot)
+    q = 1 - pct / 100.0
+    mi = min(range(N), key=lambda i: abs(cum[i] - q))
+    px = lambda i: x0 + xs[i] / XMAX * (x1 - x0)
+    py = lambda i: base - fs[i] / fmax * h
+
+    def area(lo):
+        pts = " ".join(f"L{px(i):.1f} {py(i):.1f}" for i in range(lo, N))
+        return f"M{px(lo):.1f} {base} {pts} L{px(N-1):.1f} {base} Z"
+
+    ridge = f"M{px(0):.1f} {py(0):.1f} " + " ".join(f"L{px(i):.1f} {py(i):.1f}" for i in range(1, N))
+    return area(0), area(mi), ridge, px(mi), py(mi)
 
 
 # ---------------------------------------------------------------------------
@@ -138,113 +152,103 @@ def build():
     repo_n = u["repositories"]["totalCount"]
     total = cal["totalContributions"]
     cur, longest = streaks(days)
-    letter, pct, score = grade(commits, prs, issues, longest)
+    letter, pct = grade(commits, prs, issues, longest)
 
-    lang_bytes, lang_color = {}, {}
+    lb, lc = {}, {}
     for r in repos:
         for e in r["languages"]["edges"]:
             n = e["node"]["name"]
-            lang_bytes[n] = lang_bytes.get(n, 0) + e["size"]
-            lang_color[n] = e["node"]["color"] or "#8a8a8a"
-    lt = sum(lang_bytes.values()) or 1
-    langs = [(n, b / lt * 100) for n, b in
-             sorted(lang_bytes.items(), key=lambda kv: -kv[1]) if b / lt * 100 >= 0.5][:4]
+            lb[n] = lb.get(n, 0) + e["size"]
+            lc[n] = e["node"]["color"] or "#8a8a8a"
+    lt = sum(lb.values()) or 1
+    langs = [(n, b / lt * 100) for n, b in sorted(lb.items(), key=lambda kv: -kv[1])
+             if b / lt * 100 >= 0.5][:4]
 
-    W, H = 820, 308
-    P = 26
+    W, H, P = 820, 300, 30
     s = []
     A = s.append
-
-    A(f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
-      f'xmlns="http://www.w3.org/2000/svg" role="img" '
-      f'aria-label="GitHub scorecard for {esc(u["login"])} — rank {letter}">')
-    A('<defs>'
-      f'<linearGradient id="arc" x1="0" y1="0" x2="1" y2="1">'
-      f'<stop offset="0" stop-color="{BLUE}"/><stop offset="1" stop-color="{PURPLE}"/>'
-      f'</linearGradient></defs>')
+    A(f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" '
+      f'role="img" aria-label="GitHub scorecard for {esc(u["login"])} — rank {letter}, '
+      f'top {round(pct)}% by activity">')
     A(f'<style>text{{font-family:{SANS};}} .m{{font-family:{MONO};}} '
-      f'.k{{fill:{DIM};font-size:10px;letter-spacing:1.6px;}} '
-      f'.lab{{fill:{TXT};font-size:12.5px;}}</style>')
-    A(f'<rect x="0.5" y="0.5" width="{W-1}" height="{H-1}" rx="14" '
-      f'fill="{BG}" stroke="{HAIR}"/>')
+      f'.k{{fill:{DIM};font-size:9.5px;letter-spacing:2px;}} .lab{{fill:{TXT};font-size:12.5px;}}</style>')
+    A(f'<rect x="0.5" y="0.5" width="{W-1}" height="{H-1}" rx="14" fill="{BG}" stroke="{HAIR}"/>')
 
-    # ---- header -----------------------------------------------------------
-    A(f'<text x="{P}" y="34" fill="{INK}" font-size="17" font-weight="600">'
+    # ---- masthead ---------------------------------------------------------
+    A(f'<text x="{P}" y="35" fill="{INK}" font-size="16.5" font-weight="600">'
       f'{esc(u["login"])}<tspan fill="{DIM}" font-weight="400"> / scorecard</tspan></text>')
-    A(f'<text x="{W-P}" y="33" class="k" text-anchor="end">'
-      f'GITHUB · LAST 12 MONTHS</text>')
+    A(f'<text x="{W-P}" y="34" class="k" text-anchor="end">'
+      f'<tspan class="m" fill="{TXT}" letter-spacing="0">{followers}</tspan> FOLLOWERS'
+      f'<tspan fill="{DIM}">  ·  </tspan>'
+      f'<tspan class="m" fill="{TXT}" letter-spacing="0">{repo_n}</tspan> REPOS'
+      f'<tspan fill="{DIM}">  ·  </tspan>'
+      f'<tspan class="m" fill="{TXT}" letter-spacing="0">{stars}</tspan> STARS</text>')
     A(f'<line x1="{P}" y1="50" x2="{W-P}" y2="50" stroke="{HAIR}"/>')
 
-    top, bot = 50, 264
-    zx1, zx2 = 266, 548          # vertical zone dividers
-    A(f'<line x1="{zx1}" y1="{top+14}" x2="{zx1}" y2="{bot-14}" stroke="{HAIR}"/>')
-    A(f'<line x1="{zx2}" y1="{top+14}" x2="{zx2}" y2="{bot-14}" stroke="{HAIR}"/>')
+    # ---- left: grade + distribution --------------------------------------
+    A(f'<text x="{P}" y="76" class="k">ACTIVITY RANK</text>')
+    A(f'<text x="{P}" y="150" fill="{INK}" font-size="78" font-weight="800" '
+      f'letter-spacing="-2">{letter}</text>')
+    gw = 46 if len(letter) == 1 else 74            # width the glyph(s) take
+    A(f'<rect x="{P+2}" y="158" width="54" height="3" rx="1.5" fill="{BLUE}"/>')
+    px0 = P + gw + 26
+    A(f'<text x="{px0}" y="108" fill="{DIM}" font-size="12">top</text>')
+    A(f'<text x="{px0}" y="140" class="m" fill="{INK}" font-size="30" '
+      f'font-weight="700">{round(pct)}%</text>')
+    A(f'<text x="{px0}" y="158" fill="{DIM}" font-size="11">by activity</text>')
 
-    # ---- zone A: grade dial ----------------------------------------------
-    cx, cy, R, sw = 132, 156, 53, 9
-    C = 2 * math.pi * R
-    frac = max(0.04, (100 - pct) / 100)
-    A(f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="none" stroke="{HAIR}" stroke-width="{sw}"/>')
-    A(f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="none" stroke="url(#arc)" '
-      f'stroke-width="{sw}" stroke-linecap="round" '
-      f'stroke-dasharray="{frac*C:.2f} {C:.2f}" '
-      f'transform="rotate(-90 {cx} {cy})"/>')
-    A(f'<text x="{cx}" y="{cy+2}" class="m" fill="{INK}" font-size="46" '
-      f'font-weight="700" text-anchor="middle">{letter}</text>')
-    A(f'<text x="{cx}" y="{cy+25}" fill="{DIM}" font-size="10" '
-      f'text-anchor="middle" letter-spacing="2">RANK</text>')
-    A(f'<text x="{cx}" y="{bot-16}" fill="{TXT}" font-size="12.5" text-anchor="middle">'
-      f'top <tspan class="m" fill="{INK}">{round(pct)}%</tspan> by activity</text>')
+    # distribution strip
+    dx0, dx1, dbase, dh = P, 330, 232, 40
+    A(f'<text x="{P}" y="188" class="k">WHERE YOU LAND · ACTIVITY IS HEAVY-TAILED</text>')
+    body, tail, ridge, mx, my = density_paths(dx0, dx1, dbase, dh, pct)
+    A(f'<path d="{body}" fill="{CURVE}"/>')
+    A(f'<path d="{tail}" fill="{TAIL}" fill-opacity="0.9"/>')
+    A(f'<path d="{ridge}" fill="none" stroke="{RIDGE}" stroke-width="1.4"/>')
+    A(f'<line x1="{mx:.1f}" y1="{my:.1f}" x2="{mx:.1f}" y2="{dbase}" stroke="{INK}" stroke-width="1.5"/>')
+    A(f'<circle cx="{mx:.1f}" cy="{my:.1f}" r="3.4" fill="{INK}">'
+      f'<animate attributeName="r" values="3.4;4.6;3.4" dur="2.4s" repeatCount="indefinite"/>'
+      f'<animate attributeName="fill-opacity" values="1;.55;1" dur="2.4s" repeatCount="indefinite"/></circle>')
+    A(f'<text x="{mx-6:.1f}" y="{my-8:.1f}" fill="{INK}" font-size="10.5" text-anchor="end">you</text>')
+    A(f'<line x1="{dx0}" y1="{dbase}" x2="{dx1}" y2="{dbase}" stroke="{HAIR}"/>')
+    A(f'<text x="{dx0}" y="{dbase+14}" fill="{DIM}" font-size="9.5">fewer</text>')
+    A(f'<text x="{dx1}" y="{dbase+14}" fill="{DIM}" font-size="9.5" text-anchor="end">more contributions</text>')
 
-    # ---- zone B: ledger ---------------------------------------------------
-    bx, bxr = zx1 + 24, zx2 - 22
-    def ledger(y, label, value, accent=INK):
-        s.append(f'<text x="{bx}" y="{y}" class="lab">{label}</text>')
-        s.append(f'<text x="{bxr}" y="{y}" class="m" fill="{accent}" font-size="14.5" '
-                 f'text-anchor="end">{value}</text>')
-        s.append(f'<line x1="{bx}" y1="{y+9}" x2="{bxr}" y2="{y+9}" stroke="#20233a"/>')
+    # ---- right: ledger ----------------------------------------------------
+    lx, lxr = 392, W - P
+    A(f'<line x1="366" y1="64" x2="366" y2="232" stroke="{HAIR}"/>')
+    A(f'<text x="{lx}" y="76" class="k">THIS YEAR · LAST 12 MONTHS</text>')
+    rows = [("commits", commas(commits), INK),
+            ("pull requests", commas(prs), INK),
+            ("issues", commas(issues), INK),
+            ("longest streak", f"{longest} days", INK),
+            ("current streak", f"{cur} days", GREEN if cur else DIM),
+            ("total contributions", commas(total), INK)]
+    ry = 104
+    for lab, val, ac in rows:
+        A(f'<text x="{lx}" y="{ry}" class="lab">{lab}</text>')
+        A(f'<text x="{lxr}" y="{ry}" class="m" fill="{ac}" font-size="14.5" '
+          f'text-anchor="end">{val}</text>')
+        A(f'<line x1="{lx}" y1="{ry+8}" x2="{lxr}" y2="{ry+8}" stroke="{HAIR}" stroke-opacity="0.5"/>')
+        ry += 23
 
-    A(f'<text x="{bx}" y="{top+22}" class="k">THROUGHPUT</text>')
-    ry = top + 42
-    for lab, val in [("commits", commas(commits)),
-                     ("pull requests", commas(prs)),
-                     ("issues", commas(issues))]:
-        ledger(ry, lab, val)
-        ry += 26
-    A(f'<text x="{bx}" y="{ry+6}" class="k">CONSISTENCY</text>')
-    ry += 28
-    for lab, val, ac in [("current streak", f"{cur}d", GREEN if cur else DIM),
-                         ("longest streak", f"{longest}d", INK),
-                         ("total contributions", commas(total), INK)]:
-        ledger(ry, lab, val, ac)
-        ry += 26
-
-    # ---- zone C: languages -----------------------------------------------
-    cx0, cxr = zx2 + 24, W - P
-    A(f'<text x="{cx0}" y="{top+22}" class="k">LANGUAGES</text>')
-    ly = top + 48
-    barx, barw = cx0, cxr - cx0
+    # ---- languages band ---------------------------------------------------
+    A(f'<line x1="{P}" y1="252" x2="{W-P}" y2="252" stroke="{HAIR}"/>')
+    A(f'<text x="{P}" y="273" class="k">LANGUAGES</text>')
+    bx, bw = 120, W - P - 120
+    x = bx
+    for name, p in langs:                          # stacked spectrum, 2px surface gaps
+        seg = bw * p / 100
+        A(f'<rect x="{x:.1f}" y="266" width="{max(2, seg-2):.1f}" height="9" rx="2.5" fill="{lc[name]}"/>')
+        x += seg
+    # legend
+    gx = P
+    A_gy = 292
     for name, p in langs:
-        s.append(f'<circle cx="{cx0+4}" cy="{ly-4}" r="4" fill="{lang_color[name]}"/>')
-        s.append(f'<text x="{cx0+15}" y="{ly}" class="lab">{esc(name)}</text>')
-        s.append(f'<text x="{cxr}" y="{ly}" class="m" fill="{TXT}" font-size="12" '
-                 f'text-anchor="end">{p:.0f}%</text>')
-        s.append(f'<rect x="{barx}" y="{ly+8}" width="{barw}" height="5" rx="2.5" fill="{HAIR}"/>')
-        w = max(4, barw * p / 100)
-        s.append(f'<rect x="{barx}" y="{ly+8}" width="{w:.1f}" height="5" rx="2.5" '
-                 f'fill="{lang_color[name]}"/>')
-        ly += 36
-
-    # ---- footer strip -----------------------------------------------------
-    A(f'<line x1="{P}" y1="{bot}" x2="{W-P}" y2="{bot}" stroke="{HAIR}"/>')
-    fy = bot + 30
-    A(f'<text x="{P}" y="{fy}" fill="{TXT}" font-size="12">'
-      f'<tspan class="m" fill="{INK}">{repo_n}</tspan> public repos'
-      f'<tspan fill="{DIM}">   ·   </tspan>'
-      f'<tspan class="m" fill="{INK}">{stars}</tspan> stars'
-      f'<tspan fill="{DIM}">   ·   </tspan>'
-      f'<tspan class="m" fill="{INK}">{followers}</tspan> followers</text>')
-    A(f'<text x="{W-P}" y="{fy}" fill="{DIM}" font-size="11" text-anchor="end">'
+        A(f'<circle cx="{gx+4}" cy="{A_gy-4}" r="3.6" fill="{lc[name]}"/>')
+        t = f"{esc(name)} {p:.0f}%"
+        A(f'<text x="{gx+13}" y="{A_gy}" fill="{TXT}" font-size="11.5">{t}</text>')
+        gx += 13 + len(t) * 6.6 + 18
+    A(f'<text x="{W-P}" y="{A_gy}" fill="{DIM}" font-size="10.5" text-anchor="end">'
       f'updated {time.strftime("%b %-d, %Y", time.gmtime())}</text>')
 
     A('</svg>')
