@@ -37,14 +37,21 @@ jobs:
           sudo chown -R "$USER" dist   # snk runs in a container and writes dist/ as root
           python3 scripts/gen_stats.py dist/github-stats-dark.svg
 
+      - name: generate listening svg
+        env:
+          STATSFM_USER: cupidthatbtc
+          STATSFM_RANGE: weeks
+        run: python3 scripts/gen_music.py dist/listening-dark.svg
+
       - name: verify assets exist
         # Never publish a partial dist: the pages publisher replaces the whole
         # output branch, so pushing with a file missing would DELETE that image
-        # (a broken README image). If either is missing, fail -> skip the push
+        # (a broken README image). If any is missing, fail -> skip the push
         # -> last-good SVGs stay live on the output branch.
         run: |
           test -s dist/github-snake-dark.svg
           test -s dist/github-stats-dark.svg
+          test -s dist/listening-dark.svg
 
       - name: push to output branch
         uses: crazy-max/ghaction-github-pages@v4
