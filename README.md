@@ -29,9 +29,6 @@ runs and keeping test data out of training.
 
 ---
 
-<p>
-  <img height="165" src="https://github-readme-stats.vercel.app/api?username=cupidthatbtc&show_icons=true&hide_border=true&theme=tokyonight" alt="cupidthatbtc's GitHub stats" />
-  <img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=cupidthatbtc&layout=compact&hide_border=true&theme=tokyonight" alt="top languages" />
-</p>
+<img width="480" src="https://raw.githubusercontent.com/cupidthatbtc/cupidthatbtc/output/github-stats-dark.svg" alt="cupidthatbtc's GitHub stats" />
 
 <img src="https://raw.githubusercontent.com/cupidthatbtc/cupidthatbtc/output/github-snake-dark.svg" alt="contribution snake" />

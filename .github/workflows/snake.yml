@@ -1,4 +1,4 @@
-name: snake
+name: profile assets
 
 on:
   schedule:
@@ -9,13 +9,16 @@ permissions:
   contents: write
 
 concurrency:
-  group: snake
+  group: profile-assets
   cancel-in-progress: true
 
 jobs:
-  snake:
+  build:
     runs-on: ubuntu-latest
     steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
       - name: generate snake svg
         uses: Platane/snk@v3
         with:
@@ -23,6 +26,12 @@ jobs:
           outputs: |
             dist/github-snake-dark.svg?palette=github-dark
             dist/github-snake.svg
+
+      - name: generate stats svg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATS_LOGIN: cupidthatbtc
+        run: python3 scripts/gen_stats.py dist/github-stats-dark.svg
 
       - name: push to output branch
         uses: crazy-max/ghaction-github-pages@v4
