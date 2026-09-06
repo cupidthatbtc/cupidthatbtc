@@ -1,0 +1,46 @@
+<svg width="820" height="278" viewBox="0 0 820 278" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GitHub scorecard for cupidthatbtc — rank B+, top 44%">
+<style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;} .m{font-family:ui-monospace,'SF Mono','JetBrains Mono','Cascadia Code',Menlo,Consolas,monospace;} .k{fill:#565f89;font-size:9.5px;letter-spacing:2px;} .lab{fill:#a9b1d6;font-size:12.5px;}</style>
+<rect x="0.5" y="0.5" width="819" height="277" rx="14" fill="#1a1b27" stroke="#292e42"/>
+<text x="30" y="35" fill="#c0caf5" font-size="16.5" font-weight="600">cupidthatbtc<tspan fill="#565f89" font-weight="400"> / scorecard</tspan></text>
+<text x="790" y="34" class="k" text-anchor="end"><tspan class="m" fill="#a9b1d6" letter-spacing="0">16</tspan> FOLLOWERS<tspan fill="#565f89">  ·  </tspan><tspan class="m" fill="#a9b1d6" letter-spacing="0">5</tspan> REPOS<tspan fill="#565f89">  ·  </tspan><tspan class="m" fill="#a9b1d6" letter-spacing="0">2</tspan> STARS</text>
+<line x1="30" y1="50" x2="790" y2="50" stroke="#292e42"/>
+<text x="30" y="78" class="k">ACTIVITY RANK</text>
+<text x="30" y="150" fill="#c0caf5" font-size="76" font-weight="800" letter-spacing="-2">B+</text>
+<rect x="32" y="160" width="52" height="3" rx="1.5" fill="#7aa2f7"/>
+<text x="136" y="108" fill="#565f89" font-size="12">top</text>
+<text x="136" y="140" class="m" fill="#c0caf5" font-size="30" font-weight="700">44%</text>
+<text x="136" y="158" fill="#565f89" font-size="11">of contributors</text>
+<text x="30" y="190" fill="#565f89" font-size="10.5">via the <tspan fill="#a9b1d6">github-readme-stats</tspan> rank formula</text>
+<line x1="366" y1="64" x2="366" y2="214" stroke="#292e42"/>
+<text x="392" y="78" class="k">THIS YEAR · LAST 12 MONTHS</text>
+<text x="392" y="100" class="lab">commits</text>
+<text x="790" y="100" class="m" fill="#c0caf5" font-size="14.5" text-anchor="end">1,918</text>
+<line x1="392" y1="108" x2="790" y2="108" stroke="#292e42" stroke-opacity="0.55"/>
+<text x="392" y="120" class="lab">pull requests</text>
+<text x="790" y="120" class="m" fill="#c0caf5" font-size="14.5" text-anchor="end">297</text>
+<line x1="392" y1="128" x2="790" y2="128" stroke="#292e42" stroke-opacity="0.55"/>
+<text x="392" y="140" class="lab">issues</text>
+<text x="790" y="140" class="m" fill="#c0caf5" font-size="14.5" text-anchor="end">178</text>
+<line x1="392" y1="148" x2="790" y2="148" stroke="#292e42" stroke-opacity="0.55"/>
+<text x="392" y="160" class="lab">longest streak</text>
+<text x="790" y="160" class="m" fill="#c0caf5" font-size="14.5" text-anchor="end">30 days</text>
+<line x1="392" y1="168" x2="790" y2="168" stroke="#292e42" stroke-opacity="0.55"/>
+<text x="392" y="180" class="lab">current streak</text>
+<text x="790" y="180" class="m" fill="#565f89" font-size="14.5" text-anchor="end">0 days</text>
+<line x1="392" y1="188" x2="790" y2="188" stroke="#292e42" stroke-opacity="0.55"/>
+<text x="392" y="200" class="lab">total contributions</text>
+<text x="790" y="200" class="m" fill="#c0caf5" font-size="14.5" text-anchor="end">2,426</text>
+<line x1="392" y1="208" x2="790" y2="208" stroke="#292e42" stroke-opacity="0.55"/>
+<line x1="30" y1="226" x2="790" y2="226" stroke="#292e42"/>
+<text x="30" y="246" class="k">LANGUAGES</text>
+<rect x="122.0" y="240" width="430.2" height="8" rx="2" fill="#e34c26"/>
+<rect x="554.2" y="240" width="219.4" height="8" rx="2" fill="#3572A5"/>
+<rect x="775.6" y="240" width="12.2" height="8" rx="2" fill="#3D6117"/>
+<circle cx="34" cy="262" r="3.4" fill="#e34c26"/>
+<text x="42" y="266" fill="#a9b1d6" font-size="11.5">HTML 65%</text>
+<circle cx="116.8" cy="262" r="3.4" fill="#3572A5"/>
+<text x="124.8" y="266" fill="#a9b1d6" font-size="11.5">Python 33%</text>
+<circle cx="212.8" cy="262" r="3.4" fill="#3D6117"/>
+<text x="220.8" y="266" fill="#a9b1d6" font-size="11.5">TeX 2%</text>
+<text x="790" y="266" fill="#565f89" font-size="10.5" text-anchor="end">updated Sep 6, 2026</text>
+</svg>
